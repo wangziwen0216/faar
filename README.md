@@ -1,6 +1,19 @@
 # Faar Blog
 
-基于 React + Vite 的个人博客前台，配套 Express + SQLite API（阅读量 Redis 防刷可选）。
+基于 React + Vite 的个人博客**前台**，通过 HTTP 请求独立部署的 **ablog**（Gin API）获取数据。
+
+## 部署架构
+
+```
+浏览器  →  faar（本仓库，静态页面）  →  /api/v1/*  →  ablog（Go API，如 :8081）
+```
+
+| 项目 | 职责 | 默认端口 |
+|------|------|----------|
+| **faar** | 页面、路由、后台 UI | 开发 5173 / 生产 80 |
+| **ablog** | 仅 JSON API，**不需要**托管前端静态文件 | 8081 |
+
+两个服务分开部署即可；**不必**在 ablog 里加静态文件路由。
 
 ## 功能
 
@@ -33,12 +46,7 @@ npm run dev
 - 前台：http://localhost:5173
 - API：http://localhost:8081/api/v1（Vite 代理 `/api/v1`）
 
-也可分别启动：
-
-```bash
-npm run dev          # 仅前端
-npm run dev:api      # 仅 API
-```
+后端端口在 ablog 的 `configs/config.yaml` 的 `server.port` 中配置；faar 开发代理在 `vite.config.js` 的 `target` 中对应修改。
 
 ## 环境变量
 

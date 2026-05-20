@@ -1,0 +1,10 @@
+node_modules
+dist
+server/node_modules
+server/blog.db
+.git
+.idea
+*.md
+.env
+.env.*
+!.env.example
