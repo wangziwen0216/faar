@@ -22,14 +22,16 @@
 ```bash
 # 安装依赖
 npm install
-npm install --prefix server
 
-# 同时启动前端 + API
-npm run dev:all
+# 启动 Gin 后端（ablog 项目，默认 8081 端口）
+cd ../ablog && go run ./cmd/server
+
+# 启动前端
+npm run dev
 ```
 
 - 前台：http://localhost:5173
-- API：http://localhost:3001
+- API：http://localhost:8081/api/v1（Vite 代理 `/api/v1`）
 
 也可分别启动：
 
@@ -54,18 +56,31 @@ cp .env.example .env
 | `REDIS_URL`（服务端） | 如 `redis://127.0.0.1:6379`，未配置时使用内存防刷 |
 | `ADMIN_TOKEN`（服务端） | 后台审核 API 令牌，默认开发值 `dev-admin-token` |
 
-## 投稿与审核
+## 后台管理（B01–B07）
 
-1. 用户访问 **投稿**（`/submit`）填写文章，提交后状态为 `pending`
-2. 管理员访问 **审核**（`/admin`），输入 `ADMIN_TOKEN` 登录
-3. 通过后文章变为 `published` 并出现在首页；驳回可填写原因
+| 功能 | 路径 |
+| --- | --- |
+| B01 登录/登出 | `/login`，JWT + Refresh Token |
+| B02 发布文章 | `/manage/articles/new`，Markdown 实时预览 |
+| B03 编辑文章 | `/manage/articles/:id/edit`，自动更新 `updated_at` |
+| B04 删除文章 | 文章列表「删除」，软删除 |
+| B05 文章列表 | `/manage/articles`，筛选/搜索 |
+| B06 标签/分类 | `/manage/tags`、`/manage/categories` |
+| B07 个人资料 | `/manage/profile` |
+
+默认账号：`admin` / `admin123`（可通过 `ADMIN_PASSWORD` 环境变量修改）
 
 ```
-POST /api/submissions
-GET  /api/admin/articles?status=pending
-POST /api/admin/articles/:id/approve
-POST /api/admin/articles/:id/reject
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET  /api/manage/articles
+POST /api/manage/articles
+PUT  /api/manage/articles/:id
+DELETE /api/manage/articles/:id
 ```
+
+访客投稿（`/submit`）仍为公开接口，待审核文章在后台「待审核」筛选中处理。
 
 ## API 概览
 

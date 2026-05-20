@@ -1,8 +1,3 @@
-import axios from 'axios'
+import http from './http'
 
-const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || '/api',
-  timeout: 15000,
-})
-
-export default client
+export default http

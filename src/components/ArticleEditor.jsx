@@ -7,6 +7,7 @@ const EMPTY = {
   coverImage: '',
   category: '',
   tags: '',
+  status: 'draft',
   authorName: '',
   authorContact: '',
   content: '',
@@ -15,12 +16,16 @@ const EMPTY = {
 export default function ArticleEditor({
   initialValues = EMPTY,
   categoryOptions = [],
+  tagOptions = [],
   onSubmit,
   submitLabel = '提交投稿',
   showAuthorFields = true,
+  showStatusField = false,
+  livePreview = false,
+  hideCategory = false,
 }) {
   const [form, setForm] = useState({ ...EMPTY, ...initialValues })
-  const [tab, setTab] = useState('edit')
+  const [tab, setTab] = useState(livePreview ? 'split' : 'edit')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -41,6 +46,14 @@ export default function ArticleEditor({
     }
   }
 
+  const previewContent = form.content ? (
+    <MarkdownRenderer content={form.content} />
+  ) : (
+    <p className="empty-state">暂无内容</p>
+  )
+
+  const tagHint = tagOptions.length > 0 ? tagOptions.map((t) => t.name).join('、') : ''
+
   return (
     <form className="article-editor" onSubmit={handleSubmit}>
       <div className="editor-grid">
@@ -51,35 +64,47 @@ export default function ArticleEditor({
             onChange={(e) => update('title', e.target.value)}
             placeholder="文章标题"
             required
-            maxLength={120}
+            maxLength={200}
           />
         </label>
 
-        <label>
-          分类 <span className="required">*</span>
-          <input
-            value={form.category}
-            onChange={(e) => update('category', e.target.value)}
-            placeholder="如：前端、随笔"
-            list="category-options"
-            required
-          />
-          <datalist id="category-options">
-            {categoryOptions.map((c) => (
-              <option key={c.name} value={c.name} />
-            ))}
-          </datalist>
-        </label>
+        {!hideCategory && (
+          <label>
+            分类 <span className="required">*</span>
+            <input
+              value={form.category}
+              onChange={(e) => update('category', e.target.value)}
+              placeholder="如：前端、随笔"
+              list="category-options"
+              required={!hideCategory}
+            />
+            <datalist id="category-options">
+              {categoryOptions.map((c) => (
+                <option key={c.id || c.name} value={c.name} />
+              ))}
+            </datalist>
+          </label>
+        )}
+
+        {showStatusField && (
+          <label>
+            状态
+            <select value={form.status} onChange={(e) => update('status', e.target.value)}>
+              <option value="draft">草稿</option>
+              <option value="published">立即发布</option>
+            </select>
+          </label>
+        )}
 
         <label className="editor-full">
           简介 <span className="required">*</span>
           <textarea
             value={form.summary}
             onChange={(e) => update('summary', e.target.value)}
-            placeholder="一句话概括文章内容（将显示在列表页）"
+            placeholder="一句话概括文章内容"
             rows={3}
             required
-            maxLength={300}
+            maxLength={500}
           />
         </label>
 
@@ -98,8 +123,11 @@ export default function ArticleEditor({
           <input
             value={form.tags}
             onChange={(e) => update('tags', e.target.value)}
-            placeholder="多个标签用逗号分隔，如：React, Vite"
+            placeholder={tagHint ? `可选：${tagHint}` : '多个标签用逗号分隔'}
           />
+          {tagOptions.length > 0 && (
+            <span className="form-hint">请使用已在后台创建的标签名称，逗号分隔</span>
+          )}
         </label>
 
         {showAuthorFields && (
@@ -109,7 +137,6 @@ export default function ArticleEditor({
               <input
                 value={form.authorName}
                 onChange={(e) => update('authorName', e.target.value)}
-                placeholder="你的昵称"
                 required
                 maxLength={40}
               />
@@ -119,7 +146,6 @@ export default function ArticleEditor({
               <input
                 value={form.authorContact}
                 onChange={(e) => update('authorContact', e.target.value)}
-                placeholder="邮箱或微信（可选，仅管理员可见）"
                 maxLength={80}
               />
             </label>
@@ -129,41 +155,50 @@ export default function ArticleEditor({
 
       <div className="editor-content-section">
         <div className="editor-tabs">
-          <button
-            type="button"
-            className={tab === 'edit' ? 'active' : ''}
-            onClick={() => setTab('edit')}
-          >
+          {livePreview && (
+            <button type="button" className={tab === 'split' ? 'active' : ''} onClick={() => setTab('split')}>
+              实时预览
+            </button>
+          )}
+          <button type="button" className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>
             编辑
           </button>
-          <button
-            type="button"
-            className={tab === 'preview' ? 'active' : ''}
-            onClick={() => setTab('preview')}
-          >
-            预览
-          </button>
+          {!livePreview && (
+            <button type="button" className={tab === 'preview' ? 'active' : ''} onClick={() => setTab('preview')}>
+              预览
+            </button>
+          )}
         </div>
 
-        {tab === 'edit' ? (
+        {tab === 'split' && livePreview && (
+          <div className="editor-split">
+            <label className="editor-full">
+              正文（Markdown） <span className="required">*</span>
+              <textarea
+                className="editor-markdown"
+                value={form.content}
+                onChange={(e) => update('content', e.target.value)}
+                required
+              />
+            </label>
+            <div className="editor-preview markdown-body">{previewContent}</div>
+          </div>
+        )}
+
+        {tab === 'edit' && (
           <label className="editor-full">
             正文（Markdown） <span className="required">*</span>
             <textarea
               className="editor-markdown"
               value={form.content}
               onChange={(e) => update('content', e.target.value)}
-              placeholder="使用 Markdown 编写正文…"
               required
             />
           </label>
-        ) : (
-          <div className="editor-preview markdown-body">
-            {form.content ? (
-              <MarkdownRenderer content={form.content} />
-            ) : (
-              <p className="empty-state">暂无内容</p>
-            )}
-          </div>
+        )}
+
+        {tab === 'preview' && !livePreview && (
+          <div className="editor-preview markdown-body">{previewContent}</div>
         )}
       </div>
 
@@ -171,7 +206,7 @@ export default function ArticleEditor({
 
       <div className="form-actions">
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? '提交中…' : submitLabel}
+          {submitting ? '保存中…' : submitLabel}
         </button>
       </div>
     </form>

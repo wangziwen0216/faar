@@ -1,34 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useAsync } from '../hooks/useAsync'
-import { fetchTags, fetchCategories, fetchArchives } from '../api/articles'
+import { fetchTags, fetchArchives } from '../api/articles'
 import { archiveLabel } from '../utils/date'
 import Loading from './Loading'
 
 export default function Sidebar() {
   const tags = useAsync(() => fetchTags(), [])
-  const categories = useAsync(() => fetchCategories(), [])
   const archives = useAsync(() => fetchArchives(), [])
 
   return (
     <aside className="sidebar">
-      <section className="sidebar-section">
-        <h3>分类</h3>
-        {categories.loading ? (
-          <Loading />
-        ) : (
-          <ul className="sidebar-list">
-            {categories.data?.map((c) => (
-              <li key={c.name}>
-                <Link to={`/category/${encodeURIComponent(c.name)}`}>
-                  {c.name}
-                  <span className="count">{c.count}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
       <section className="sidebar-section">
         <h3>标签</h3>
         {tags.loading ? (
@@ -36,9 +17,8 @@ export default function Sidebar() {
         ) : (
           <div className="tag-cloud">
             {tags.data?.map((t) => (
-              <Link key={t.name} to={`/tag/${encodeURIComponent(t.name)}`} className="tag-badge">
+              <Link key={t.id || t.name} to={`/tag/${encodeURIComponent(t.name)}`} className="tag-badge">
                 {t.name}
-                <span className="count">{t.count}</span>
               </Link>
             ))}
           </div>

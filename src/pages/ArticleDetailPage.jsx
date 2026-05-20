@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { fetchArticle, recordArticleView } from '../api/articles'
+import { useMemo } from 'react'
+import { useParams } from 'react-router-dom'
+import { fetchArticle } from '../api/articles'
 import { useAsync } from '../hooks/useAsync'
 import { formatDateTime } from '../utils/date'
 import { extractHeadings } from '../utils/toc'
@@ -12,18 +12,13 @@ import TagBadge from '../components/TagBadge'
 import GiscusComments from '../components/GiscusComments'
 
 export default function ArticleDetailPage() {
-  const { slug } = useParams()
-  const { data: article, loading, error } = useAsync(() => fetchArticle(slug), [slug])
+  const { id } = useParams()
+  const { data: article, loading, error } = useAsync(() => fetchArticle(id), [id])
 
   const headings = useMemo(
     () => (article?.content ? extractHeadings(article.content) : []),
     [article?.content],
   )
-
-  useEffect(() => {
-    if (!article?.id) return undefined
-    recordArticleView(article.id).catch(() => {})
-  }, [article?.id])
 
   if (loading) return <Loading />
   if (error) return <ErrorMessage message="文章加载失败" />
@@ -37,8 +32,6 @@ export default function ArticleDetailPage() {
           <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt)}</time>
           <span className="meta-dot">·</span>
           <span>{article.viewCount} 阅读</span>
-          <span className="meta-dot">·</span>
-          <Link to={`/category/${encodeURIComponent(article.category)}`}>{article.category}</Link>
         </div>
         {article.tags?.length > 0 && (
           <div className="article-detail-tags">
@@ -60,7 +53,7 @@ export default function ArticleDetailPage() {
         </aside>
       </div>
 
-      <GiscusComments slug={article.slug} title={article.title} />
+      <GiscusComments slug={String(article.id)} title={article.title} />
     </article>
   )
 }
